@@ -79,6 +79,11 @@ certificate, Team ID `T832773L2J`, and a stapled notarization ticket. The Nix
 model package also builds from the hash-pinned manifest and installs the
 expected local cache layout.
 
+The packaged application was also started hidden in a logged-in Apple Silicon
+session and remained running. That proves launchability only; the accessibility
+tree was unavailable to automation, so this is not evidence that a menu-bar
+control, permission prompt, or capture workflow passed.
+
 The interactive permission, menu-bar, dictation, meeting, speaker-fingerprint,
 and recovery items above remain unverified. They require a real logged-in
 Apple Silicon session; opening the application or passing a non-interactive

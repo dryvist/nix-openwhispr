@@ -8,6 +8,7 @@ else
   for candidate in \
     "$HOME/Applications/OpenWhispr.app" \
     "$HOME/Applications/Home Manager Apps/OpenWhispr.app" \
+    "$HOME/.nix-profile/Applications/OpenWhispr.app" \
     "/Applications/OpenWhispr.app"; do
     if [[ -d "$candidate" ]]; then app_path="$candidate"; break; fi
   done
