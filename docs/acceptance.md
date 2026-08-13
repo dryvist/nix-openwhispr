@@ -71,10 +71,13 @@ as CI-passed behavior.
 
 ## Current evidence
 
-As of 2026-08-13, the pinned Apple Silicon application package has passed
-strict nested-code signature verification and Gatekeeper assessment with the
-upstream Developer ID/notarization intact. The Nix model package also builds
-from the hash-pinned manifest and installs the expected local cache layout.
+As of 2026-08-13, the pinned Apple Silicon application package at
+`/nix/store/y05ixyq29fj39d6fz7zxgw8kw34pz8fd-openwhispr-1.8.3` passed strict
+nested-code signature verification and Gatekeeper assessment. Its bundle
+reports identifier `com.gizmolabs.openwhispr`, the upstream Developer ID
+certificate, Team ID `T832773L2J`, and a stapled notarization ticket. The Nix
+model package also builds from the hash-pinned manifest and installs the
+expected local cache layout.
 
 The interactive permission, menu-bar, dictation, meeting, speaker-fingerprint,
 and recovery items above remain unverified. They require a real logged-in
