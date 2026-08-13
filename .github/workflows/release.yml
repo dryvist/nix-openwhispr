@@ -22,12 +22,20 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: version
         env:
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
           INPUT_VERSION: ${{ inputs.version }}
         run: |
+          if [ "$EVENT_NAME" = workflow_dispatch ]; then
+            test "$GITHUB_REF" = refs/heads/main
+          else
+            git fetch origin main --depth=1
+            git merge-base --is-ancestor "$GITHUB_SHA" "origin/main"
+          fi
           if [ "$EVENT_NAME" = workflow_dispatch ]; then
             version="$INPUT_VERSION"
           else
@@ -43,7 +51,7 @@ jobs:
       matrix:
         include:
           - system: aarch64-darwin
-            runner: macos-14
+            runner: [self-hosted, openwhispr-macos, arm64]
             artifact: openwhispr-aarch64-darwin
           - system: x86_64-darwin
             runner: macos-13
@@ -60,11 +68,17 @@ jobs:
       - name: Copy application bundle
         run: |
           mkdir -p dist
-          cp -R "$(cat package-path)/Applications/OpenWhispr.app" dist/
+          ditto "$(cat package-path)/Applications/OpenWhispr.app" dist/OpenWhispr.app
       - name: Archive and checksum
         run: |
           ditto -c -k --sequesterRsrc --keepParent dist/OpenWhispr.app "${{ matrix.artifact }}.zip"
           shasum -a 256 "${{ matrix.artifact }}.zip" > "${{ matrix.artifact }}.zip.sha256"
+      - name: Verify bundle metadata
+        run: |
+          test -x dist/OpenWhispr.app/Contents/MacOS/OpenWhispr
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' dist/OpenWhispr.app/Contents/Info.plist
+          codesign --verify --deep --strict dist/OpenWhispr.app
+          spctl --assess --type execute dist/OpenWhispr.app
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}

@@ -22,10 +22,59 @@ jobs:
         run: ./scripts/check-publication.sh
       - name: Check flake
         run: nix flake check --all-systems --no-build
+      - name: Check lock file
+        run: nix flake lock --check
       - name: Check formatting
-        run: nix fmt -- --check
+        run: nix fmt -- --fail-on-change
       - name: Evaluate Darwin package
         run: nix eval --raw .#packages.aarch64-darwin.default.name
+
+      - name: Validate pinned model manifest
+        run: |
+          jq -e '.schema == 1 and (.artifacts | length >= 8)' models.json
+          test "$(jq -r '.artifacts[].sha256' models.json | grep -Ec '^[0-9a-f]{64}$')" -eq 8
+
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            extra-experimental-features = nix-command flakes
+      - name: ShellCheck
+        run: nix develop --command shellcheck scripts/*.sh
+      - name: Static Nix checks
+        run: |
+          nix develop --command statix check .
+          nix develop --command deadnix --fail
+
+  darwin-build:
+    if: github.event_name != 'pull_request'
+    runs-on: macos-14
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            extra-experimental-features = nix-command flakes
+      - name: Build Apple Silicon package
+        run: nix build .#packages.aarch64-darwin.default --no-link --print-out-paths > package-path
+      - name: Inspect application bundle
+        run: |
+          app="$(cat package-path)/Applications/OpenWhispr.app"
+          test -x "$app/Contents/MacOS/OpenWhispr"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist"
+          codesign --verify --deep --strict "$app"
+          spctl --assess --type execute "$app"
+          ditto -c -k --sequesterRsrc --keepParent "$app" openwhispr-ci.zip
+          shasum -a 256 openwhispr-ci.zip > openwhispr-ci.zip.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openwhispr-ci-aarch64-darwin
+          path: openwhispr-ci.zip*
 
   actions:
     runs-on: ubuntu-latest
@@ -47,4 +96,3 @@ jobs:
         with:
           languages: actions
       - uses: github/codeql-action/analyze@v3
-

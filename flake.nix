@@ -81,7 +81,6 @@
               statix
               deadnix
               shellcheck
-              jq
             ];
           };
         }

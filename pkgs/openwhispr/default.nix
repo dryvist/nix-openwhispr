@@ -17,11 +17,12 @@ stdenvNoCC.mkDerivation {
     inherit (asset) url hash;
   };
   nativeBuildInputs = [ undmg ];
+  dontPatchShebangs = true;
   sourceRoot = ".";
   installPhase = ''
-    mkdir -p $out/Applications
+    mkdir -p "$out/Applications"
     test -d OpenWhispr.app
-    cp -R OpenWhispr.app $out/Applications/
+    /usr/bin/ditto --rsrc --extattr --acl OpenWhispr.app "$out/Applications/OpenWhispr.app"
   '';
   meta = {
     description = "Privacy-first local voice dictation, meeting transcription, and notes";

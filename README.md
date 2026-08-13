@@ -62,6 +62,14 @@ The module installs the application and manages a user launch agent. The
 application's own menu bar controls remain available independently of the
 launch agent.
 
+The upstream application owns its menu-bar item and its model lifecycle. This
+integration selects the local transcription engine and model through native
+environment configuration while leaving upstream's signed helper/model
+downloads and cache management in place. The package preserves and verifies the
+upstream Developer ID signature and notarization; it does not replace them
+with an ad-hoc signature. `models.json` records the helper and model provenance
+used by the pinned release.
+
 ## First-run permissions
 
 macOS will request microphone, input monitoring, accessibility, and system
@@ -89,13 +97,17 @@ explicitly selects a remote route.
 ```sh
 nix develop
 nix flake check --all-systems
-nix fmt -- --check
+nix fmt -- --fail-on-change
 ./scripts/check-publication.sh
 ```
 
 Pull requests run on GitHub-hosted Linux runners for static checks. Trusted
-release jobs build Darwin artifacts and publish checksums and provenance. Any
-private signing material is restricted to reviewed release environments.
+release jobs build the Apple Silicon artifact inside a disposable Tart macOS
+VM on the Mac Studio, with a one-job JIT runner registration; the Intel
+compatibility artifact uses a GitHub-hosted Intel macOS runner. The self-hosted
+label is restricted to this repository and trusted release refs. Any private
+signing material is restricted to reviewed release environments. See
+`docs/mac-studio-runner.md` and `docs/acceptance.md`.
 
 ## License and upstream provenance
 
