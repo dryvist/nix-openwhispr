@@ -108,9 +108,10 @@ nix fmt -- --fail-on-change
 ./scripts/check-publication.sh
 ```
 
-Pull requests run on GitHub-hosted Linux runners for static checks. Trusted
-release jobs build the Apple Silicon artifact inside a disposable Tart macOS
-VM on the Mac Studio, with a one-job JIT runner registration; the Intel
+Pull requests run on GitHub-hosted Linux and Apple Silicon runners. The release
+workflow reserves the Apple Silicon artifact for a disposable Tart macOS VM on
+the Mac Studio, using one-job JIT runner registration; this isolated runner
+must be provisioned and accepted before a release can use its label. The Intel
 compatibility artifact uses a GitHub-hosted Intel macOS runner. The self-hosted
 label is restricted to this repository and trusted release refs. Any private
 signing material is restricted to reviewed release environments. See

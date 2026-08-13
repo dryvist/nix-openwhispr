@@ -63,6 +63,8 @@ jobs:
         run: nix build .#packages.aarch64-darwin.default --no-link --print-out-paths > package-path
       - name: Build pinned local models
         run: nix build .#packages.aarch64-darwin.models --no-link
+      - name: Build Home Manager integration
+        run: nix build .#checks.aarch64-darwin.module --no-link
       - name: Inspect application bundle
         run: |
           app="$(cat package-path)/Applications/OpenWhispr.app"

@@ -1,10 +1,11 @@
 # Isolated Mac Studio release runner
 
-Release packaging runs in a disposable macOS VM rather than on the Studio's
-host operating system. Use the [community-supported Tartelet fleet manager](https://github.com/shapehq/tartelet)
+The release workflow is designed to package inside a disposable macOS VM rather
+than on the Studio's host operating system. Use the [community-supported Tartelet fleet manager](https://github.com/shapehq/tartelet)
 on the Studio, backed by [Tart](https://github.com/cirruslabs/tart) and GitHub's one-job JIT runner configuration
 endpoint. Tartelet is the lifecycle owner; this repository only supplies the
-runner label in the workflow.
+runner label in the workflow. The runner is not considered enabled until the
+base-VM acceptance gate below has completed with retained evidence.
 
 1. Tartelet obtains a short-lived GitHub App-backed runner credential.
 2. It requests a repository-scoped JIT configuration with the restricted

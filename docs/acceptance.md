@@ -79,6 +79,11 @@ certificate, Team ID `T832773L2J`, and a stapled notarization ticket. The Nix
 model package also builds from the hash-pinned manifest and installs the
 expected local cache layout.
 
+The generated Home Manager activation package also produced a valid launchd
+plist with the local Whisper provider, pinned model selection, `RunAtLoad`, and
+crash-only restart behavior. This verifies the declarative artifact, not a
+successful logged-in launchd activation.
+
 The packaged application was also started hidden in a logged-in Apple Silicon
 session and remained running. That proves launchability only; the accessibility
 tree was unavailable to automation, so this is not evidence that a menu-bar
