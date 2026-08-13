@@ -54,7 +54,7 @@ jobs:
             runner: [self-hosted, openwhispr-macos, arm64]
             artifact: openwhispr-aarch64-darwin
           - system: x86_64-darwin
-            runner: macos-13
+            runner: macos-15-intel
             artifact: openwhispr-x86_64-darwin
     runs-on: ${{ matrix.runner }}
     steps:
