@@ -28,11 +28,14 @@ jobs:
         run: nix fmt -- --fail-on-change
       - name: Evaluate Darwin package
         run: nix eval --raw .#packages.aarch64-darwin.default.name
+      - name: Build pinned local models
+        run: nix build .#packages.aarch64-darwin.models --no-link
 
       - name: Validate pinned model manifest
         run: |
           jq -e '.schema == 1 and (.artifacts | length >= 8)' models.json
           test "$(jq -r '.artifacts[].sha256' models.json | grep -Ec '^[0-9a-f]{64}$')" -eq 8
+          jq -e 'all(.artifacts[]; (.license | type) == "string" and length > 0)' models.json
 
   shell:
     runs-on: ubuntu-latest

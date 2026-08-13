@@ -2,23 +2,33 @@
   config,
   lib,
   pkgs,
-  self,
   ...
 }:
 let
   cfg = config.programs.openwhispr;
   package = cfg.package;
+  models = cfg.models;
   app = "${package}/Applications/OpenWhispr.app";
-  cacheDir = "${config.home.homeDirectory}/.cache/openwhispr";
 in
 {
   options.programs.openwhispr = {
     enable = lib.mkEnableOption "OpenWhispr";
     package = lib.mkOption {
       type = lib.types.package;
-      default = self.packages.${pkgs.system}.default;
+      default = pkgs.callPackage ../pkgs/openwhispr { };
       defaultText = lib.literalExpression "openwhispr.packages.\${system}.default";
       description = "OpenWhispr application package.";
+    };
+    models = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.callPackage ../pkgs/openwhispr-models { };
+      defaultText = lib.literalExpression "openwhispr.packages.\${system}.models";
+      description = "Hash-pinned local models linked into the upstream cache layout.";
+    };
+    modelBootstrap = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Link the pinned local Whisper, diarization, and semantic-search models.";
     };
     autoStart = lib.mkOption {
       type = lib.types.bool;
@@ -52,7 +62,32 @@ in
       LOCAL_TRANSCRIPTION_PROVIDER = cfg.localTranscriptionProvider;
       LOCAL_WHISPER_MODEL = cfg.whisperModel;
       PARAKEET_MODEL = cfg.parakeetModel;
-      DIARIZATION_MODEL_DIR = "${cacheDir}/diarization-models";
+    };
+    home.file = lib.mkIf cfg.modelBootstrap {
+      ".cache/openwhispr/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx" = {
+        source = "${models}/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx";
+        force = true;
+      };
+      ".cache/openwhispr/diarization-models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx" = {
+        source = "${models}/diarization-models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx";
+        force = true;
+      };
+      ".cache/openwhispr/diarization-models/silero_vad.onnx" = {
+        source = "${models}/diarization-models/silero_vad.onnx";
+        force = true;
+      };
+      ".cache/openwhispr/embedding-models/all-MiniLM-L6-v2/model.onnx" = {
+        source = "${models}/embedding-models/all-MiniLM-L6-v2/model.onnx";
+        force = true;
+      };
+      ".cache/openwhispr/embedding-models/all-MiniLM-L6-v2/tokenizer.json" = {
+        source = "${models}/embedding-models/all-MiniLM-L6-v2/tokenizer.json";
+        force = true;
+      };
+      ".cache/openwhispr/whisper-models/ggml-base.bin" = {
+        source = "${models}/whisper-models/ggml-base.bin";
+        force = true;
+      };
     };
     launchd.agents.openwhispr = lib.mkIf cfg.autoStart {
       enable = true;
@@ -64,7 +99,6 @@ in
           LOCAL_TRANSCRIPTION_PROVIDER = cfg.localTranscriptionProvider;
           LOCAL_WHISPER_MODEL = cfg.whisperModel;
           PARAKEET_MODEL = cfg.parakeetModel;
-          DIARIZATION_MODEL_DIR = "${cacheDir}/diarization-models";
         };
         RunAtLoad = true;
         KeepAlive = {

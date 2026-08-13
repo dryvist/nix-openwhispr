@@ -28,10 +28,12 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
           openwhispr = pkgs.callPackage ./pkgs/openwhispr { };
+          models = pkgs.callPackage ./pkgs/openwhispr-models { };
         in
         {
           default = openwhispr;
           openwhispr = openwhispr;
+          inherit models;
         }
       );
 
@@ -105,9 +107,9 @@
                   home.username = "ci";
                   home.homeDirectory = "/Users/ci";
                   home.stateVersion = "26.05";
+                  programs.openwhispr.enable = true;
                 }
               ];
-              extraSpecialArgs = { inherit self; };
             }).activationPackage;
         }
       );

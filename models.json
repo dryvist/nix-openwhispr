@@ -5,48 +5,56 @@
     "speakerSegmentation": {
       "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-segmentation-models/sherpa-onnx-pyannote-segmentation-3-0.tar.bz2",
       "sha256": "24615ee884c897d9d2ba09bb4d30da6bb1b15e685065962db5b02e76e4996488",
+      "license": "Apache-2.0 project release; model-specific terms are not declared in the release asset",
       "install": "tar.bz2",
       "destination": "~/.cache/openwhispr/diarization-models"
     },
     "speakerEmbedding": {
       "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx",
       "sha256": "357a834f702b80161e5b981182c038e18553c1f2ca752ed6cec2052365d4129b",
+      "license": "Model-specific terms are not declared in the upstream release asset",
       "install": "file",
       "destination": "~/.cache/openwhispr/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx"
     },
     "sileroVad": {
       "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx",
       "sha256": "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6",
+      "license": "Apache-2.0 project release; model-specific terms are not declared in the release asset",
       "install": "file",
       "destination": "~/.cache/openwhispr/diarization-models/silero_vad.onnx"
     },
     "semanticEmbedding": {
       "url": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx",
       "sha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+      "license": "Apache-2.0",
       "install": "file",
       "destination": "~/.cache/openwhispr/embedding-models/all-MiniLM-L6-v2/model.onnx"
     },
     "semanticTokenizer": {
       "url": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer.json",
       "sha256": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+      "license": "Apache-2.0",
       "install": "file",
       "destination": "~/.cache/openwhispr/embedding-models/all-MiniLM-L6-v2/tokenizer.json"
     },
     "whisperBase": {
       "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin",
       "sha256": "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe",
+      "license": "MIT",
       "install": "file",
       "destination": "~/.cache/openwhispr/whisper-models/ggml-base.bin"
     },
     "qdrantAppleSilicon": {
       "url": "https://github.com/qdrant/qdrant/releases/download/v1.19.0/qdrant-aarch64-apple-darwin.tar.gz",
       "sha256": "4e279a80cc1ebe73e859318ff86375af54c123887dd7ae46605c0eb6cb7c44e8",
+      "license": "Apache-2.0",
       "install": "tar.gz",
       "destination": "upstream-managed-app-bundle"
     },
     "sherpaOnnxMacUniversal": {
       "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.4/sherpa-onnx-v1.13.4-osx-universal2-shared.tar.bz2",
       "sha256": "02b9b0cf30819a18c6d5cf861aebf32336cb79958ab97a2b248227059678058b",
+      "license": "Apache-2.0",
       "install": "tar.bz2",
       "destination": "upstream-managed-app-bundle"
     }

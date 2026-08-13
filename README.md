@@ -21,6 +21,7 @@ not subject to the hosted service's word quota.
 | Speaker labels and voice fingerprints | Local ONNX models | Best supported on Apple Silicon |
 | Notes and semantic search | Local SQLite/vector data | Search quality depends on downloaded models |
 | AI agent | Local model or explicit provider | Provider credentials are user-selected |
+| Local MCP access | Read local notes while the app runs | Hosted API/MCP synchronization remains account-backed |
 | Team spaces, hosted sharing, billing | Hosted service | Requires the upstream service/account |
 | Optional remote inference | Explicit LAN endpoint | Must be configured and authenticated separately |
 
@@ -62,13 +63,19 @@ The module installs the application and manages a user launch agent. The
 application's own menu bar controls remain available independently of the
 launch agent.
 
-The upstream application owns its menu-bar item and its model lifecycle. This
-integration selects the local transcription engine and model through native
-environment configuration while leaving upstream's signed helper/model
-downloads and cache management in place. The package preserves and verifies the
+The upstream application owns its menu-bar item and runtime model lifecycle.
+This integration selects the local transcription engine and model through
+native environment configuration and links hash-pinned baseline models into
+the cache paths the upstream application actually reads. The package preserves
+and verifies the
 upstream Developer ID signature and notarization; it does not replace them
 with an ad-hoc signature. `models.json` records the helper and model provenance
 used by the pinned release.
+
+Home Manager enables the pinned Whisper, diarization, and semantic-search
+bootstrap by default. Parakeet and local LLM models remain owned by the
+upstream model manager or the consuming `nix-ai`/`nix-darwin` configuration;
+this package does not duplicate or scan the shared Hugging Face/MLX cache.
 
 ## First-run permissions
 

@@ -13,13 +13,15 @@ The Nix derivation uses `sourceProvenance = binaryNativeCode` because the
 release asset is a pre-built application bundle. Release workflows publish
 checksums and GitHub build provenance for the artifacts produced here.
 
-`models.json` is the separate local-bootstrap manifest. It pins SHA-256 values
+`models.json` is the local-bootstrap manifest consumed by the Nix model package. It pins SHA-256 values
 for the diarization segmentation model, speaker-embedding model, VAD model,
 semantic-search model/tokenizer, Qdrant helper, and sherpa-onnx helper release.
-The upstream application owns downloading into its cache layout; this manifest
-records the exact artifacts and digests to review when the upstream release is
-updated. The application bundle remains upstream-owned; helper and model files
-are not silently replaced by an unreviewed source.
+Each entry records the declared license when the upstream artifact provides one;
+where the release does not declare model-specific terms, that uncertainty is
+recorded explicitly rather than inferred.
+Home Manager links the resulting Nix store paths into the upstream cache layout,
+so first use does not depend on an unverified runtime download. Parakeet and
+LLM model caches remain upstream/consumer-owned.
 
 ## Update procedure
 
