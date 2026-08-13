@@ -25,6 +25,10 @@ nix run github:dryvist/nix-openwhispr#verify-local
       unwanted foreground window.
 - [ ] The upstream menu-bar item can open the panel, start dictation, and
       start/stop meeting capture.
+- [ ] In upstream Settings, dictation, meeting, and audio-import transcription
+      modes are each set to **Local**; the local agent is selected where an
+      agent is used. The Nix environment pre-warms models but does not alter
+      these renderer settings.
 - [ ] Killing the process causes launchd to restart it; an intentional stop
       remains stopped until the user starts it again.
 
@@ -51,6 +55,10 @@ nix run github:dryvist/nix-openwhispr#verify-local
       recordings and transcripts are not silently uploaded.
 - [ ] Optional API/MCP endpoints are reachable only when explicitly enabled and
       authenticated.
+
+The upstream release exposes API/MCP through its hosted authenticated service;
+this package does not represent that account-backed endpoint as a local API or
+MCP server.
 
 ## Intel and recovery
 

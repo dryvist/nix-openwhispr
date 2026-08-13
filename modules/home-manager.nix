@@ -40,17 +40,17 @@ in
         "parakeet"
       ];
       default = "whisper";
-      description = "Local transcription engine selected at startup.";
+      description = "Local engine pre-warmed by the upstream application at startup.";
     };
     whisperModel = lib.mkOption {
       type = lib.types.str;
       default = "base";
-      description = "Pinned upstream Whisper model name used for local transcription.";
+      description = "Pinned upstream Whisper model name pre-warmed for local transcription.";
     };
     parakeetModel = lib.mkOption {
       type = lib.types.str;
       default = "parakeet-tdt-0.6b-v3";
-      description = "Default Parakeet model when localTranscriptionProvider is parakeet.";
+      description = "Parakeet model pre-warmed when localTranscriptionProvider is parakeet.";
     };
   };
 

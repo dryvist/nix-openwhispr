@@ -21,7 +21,7 @@ not subject to the hosted service's word quota.
 | Speaker labels and voice fingerprints | Local ONNX models | Best supported on Apple Silicon |
 | Notes and semantic search | Local SQLite/vector data | Search quality depends on downloaded models |
 | AI agent | Local model or explicit provider | Provider credentials are user-selected |
-| Local MCP access | Read local notes while the app runs | Hosted API/MCP synchronization remains account-backed |
+| API and MCP | Not exposed locally by this upstream desktop release | The hosted API/MCP service is account-backed and rate-limited |
 | Team spaces, hosted sharing, billing | Hosted service | Requires the upstream service/account |
 | Optional remote inference | Explicit LAN endpoint | Must be configured and authenticated separately |
 
@@ -64,18 +64,31 @@ application's own menu bar controls remain available independently of the
 launch agent.
 
 The upstream application owns its menu-bar item and runtime model lifecycle.
-This integration selects the local transcription engine and model through
-native environment configuration and links hash-pinned baseline models into
-the cache paths the upstream application actually reads. The package preserves
-and verifies the
-upstream Developer ID signature and notarization; it does not replace them
-with an ad-hoc signature. `models.json` records the helper and model provenance
-used by the pinned release.
+This integration pre-warms the selected local engine and links hash-pinned
+baseline models into the cache paths the upstream application actually reads.
+The upstream application does not expose a supported declarative setting for
+its first-run processing mode: select **Local** for dictation, meetings, and
+audio import in its Settings once. This package deliberately does not mutate
+its internal browser storage to simulate that selection. The package preserves
+and verifies the upstream Developer ID signature and notarization; it does not
+replace them with an ad-hoc signature. `models.json` records the helper and
+model provenance used by the pinned release.
 
 Home Manager enables the pinned Whisper, diarization, and semantic-search
 bootstrap by default. Parakeet and local LLM models remain owned by the
 upstream model manager or the consuming `nix-ai`/`nix-darwin` configuration;
 this package does not duplicate or scan the shared Hugging Face/MLX cache.
+
+## Plan-boundary policy
+
+Every locally implementable desktop capability is available without a package
+quota: local transcription, local meeting processing, diarization, speaker
+fingerprints, local notes/search, and locally configured agents. The upstream
+Business and Enterprise plans also include managed cloud transcription, cloud
+sync/mobile, hosted API/MCP, organization administration, SSO/SCIM, audit
+logs, and retention controls. Those are proprietary account services, so this
+repository neither claims to provide them locally nor attempts to bypass their
+plans or rate limits.
 
 ## First-run permissions
 
