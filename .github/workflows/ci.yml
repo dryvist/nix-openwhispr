@@ -24,6 +24,11 @@ jobs:
         run: nix flake check --all-systems --no-build
       - name: Check lock file
         run: nix flake lock --check
+      - name: Validate upstream release pin
+        run: |
+          jq -e '.upstreamTag | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")' release.json
+          jq -e '.upstreamRevision | test("^[0-9a-f]{40}$")' release.json
+          jq -e '.upstreamReleasedAt | fromdateiso8601 > 0' release.json
       - name: Check formatting
         run: nix fmt -- --fail-on-change
       - name: Evaluate Darwin package
