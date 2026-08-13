@@ -32,8 +32,7 @@
         in
         {
           default = openwhispr;
-          openwhispr = openwhispr;
-          inherit models;
+          inherit models openwhispr;
         }
       );
 
@@ -104,9 +103,11 @@
               modules = [
                 ./modules/home-manager.nix
                 {
-                  home.username = "ci";
-                  home.homeDirectory = "/Users/ci";
-                  home.stateVersion = "26.05";
+                  home = {
+                    username = "ci";
+                    homeDirectory = "/Users/ci";
+                    stateVersion = "26.05";
+                  };
                   programs.openwhispr.enable = true;
                 }
               ];

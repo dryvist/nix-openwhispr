@@ -50,7 +50,6 @@ jobs:
           nix develop --command deadnix --fail
 
   darwin-build:
-    if: github.event_name != 'pull_request'
     runs-on: macos-26
     permissions:
       contents: read

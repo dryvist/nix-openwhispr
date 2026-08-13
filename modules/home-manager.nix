@@ -6,8 +6,7 @@
 }:
 let
   cfg = config.programs.openwhispr;
-  package = cfg.package;
-  models = cfg.models;
+  inherit (cfg) models package;
   app = "${package}/Applications/OpenWhispr.app";
 in
 {
@@ -56,37 +55,39 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = [ package ];
-    home.sessionVariables = {
-      OPENWHISPR_CHANNEL = "production";
-      LOCAL_TRANSCRIPTION_PROVIDER = cfg.localTranscriptionProvider;
-      LOCAL_WHISPER_MODEL = cfg.whisperModel;
-      PARAKEET_MODEL = cfg.parakeetModel;
-    };
-    home.file = lib.mkIf cfg.modelBootstrap {
-      ".cache/openwhispr/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx" = {
-        source = "${models}/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx";
-        force = true;
+    home = {
+      packages = [ package ];
+      sessionVariables = {
+        OPENWHISPR_CHANNEL = "production";
+        LOCAL_TRANSCRIPTION_PROVIDER = cfg.localTranscriptionProvider;
+        LOCAL_WHISPER_MODEL = cfg.whisperModel;
+        PARAKEET_MODEL = cfg.parakeetModel;
       };
-      ".cache/openwhispr/diarization-models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx" = {
-        source = "${models}/diarization-models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx";
-        force = true;
-      };
-      ".cache/openwhispr/diarization-models/silero_vad.onnx" = {
-        source = "${models}/diarization-models/silero_vad.onnx";
-        force = true;
-      };
-      ".cache/openwhispr/embedding-models/all-MiniLM-L6-v2/model.onnx" = {
-        source = "${models}/embedding-models/all-MiniLM-L6-v2/model.onnx";
-        force = true;
-      };
-      ".cache/openwhispr/embedding-models/all-MiniLM-L6-v2/tokenizer.json" = {
-        source = "${models}/embedding-models/all-MiniLM-L6-v2/tokenizer.json";
-        force = true;
-      };
-      ".cache/openwhispr/whisper-models/ggml-base.bin" = {
-        source = "${models}/whisper-models/ggml-base.bin";
-        force = true;
+      file = lib.mkIf cfg.modelBootstrap {
+        ".cache/openwhispr/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx" = {
+          source = "${models}/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx";
+          force = true;
+        };
+        ".cache/openwhispr/diarization-models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx" = {
+          source = "${models}/diarization-models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx";
+          force = true;
+        };
+        ".cache/openwhispr/diarization-models/silero_vad.onnx" = {
+          source = "${models}/diarization-models/silero_vad.onnx";
+          force = true;
+        };
+        ".cache/openwhispr/embedding-models/all-MiniLM-L6-v2/model.onnx" = {
+          source = "${models}/embedding-models/all-MiniLM-L6-v2/model.onnx";
+          force = true;
+        };
+        ".cache/openwhispr/embedding-models/all-MiniLM-L6-v2/tokenizer.json" = {
+          source = "${models}/embedding-models/all-MiniLM-L6-v2/tokenizer.json";
+          force = true;
+        };
+        ".cache/openwhispr/whisper-models/ggml-base.bin" = {
+          source = "${models}/whisper-models/ggml-base.bin";
+          force = true;
+        };
       };
     };
     launchd.agents.openwhispr = lib.mkIf cfg.autoStart {
