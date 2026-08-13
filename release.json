@@ -1,0 +1,15 @@
+{
+  "upstreamVersion": "1.8.3",
+  "upstreamTag": "v1.8.3",
+  "releaseAssets": {
+    "aarch64-darwin": {
+      "url": "https://github.com/OpenWhispr/openwhispr/releases/download/v1.8.3/OpenWhispr-1.8.3-arm64.dmg",
+      "hash": "sha256-aB52FqxNzbEwZRk5q6T1a8sVZWIKJx+cTd+IY0h6J8s="
+    },
+    "x86_64-darwin": {
+      "url": "https://github.com/OpenWhispr/openwhispr/releases/download/v1.8.3/OpenWhispr-1.8.3.dmg",
+      "hash": "sha256-LUDuTEd0UY2kgKy9WYCpT4I2nKOkxF+oX8Nzmxa/5xU="
+    }
+  }
+}
+

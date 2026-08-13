@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version without the v prefix
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$EVENT_NAME" = workflow_dispatch ]; then
+            version="$INPUT_VERSION"
+          else
+            version="${REF_NAME#v}"
+          fi
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          test "$(jq -r .upstreamVersion release.json)" = "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: source
+    strategy:
+      matrix:
+        include:
+          - system: aarch64-darwin
+            runner: macos-14
+            artifact: openwhispr-aarch64-darwin
+          - system: x86_64-darwin
+            runner: macos-13
+            artifact: openwhispr-x86_64-darwin
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            extra-experimental-features = nix-command flakes
+      - name: Build package
+        run: nix build ".#packages.${{ matrix.system }}.default" --no-link --print-out-paths > package-path
+      - name: Copy application bundle
+        run: |
+          mkdir -p dist
+          cp -R "$(cat package-path)/Applications/OpenWhispr.app" dist/
+      - name: Archive and checksum
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent dist/OpenWhispr.app "${{ matrix.artifact }}.zip"
+          shasum -a 256 "${{ matrix.artifact }}.zip" > "${{ matrix.artifact }}.zip.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            ${{ matrix.artifact }}.zip
+            ${{ matrix.artifact }}.zip.sha256
+
+  publish:
+    needs: [source, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*.zip
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.source.outputs.version }}
+        run: gh release create "v$VERSION" dist/* --generate-notes --verify-tag
