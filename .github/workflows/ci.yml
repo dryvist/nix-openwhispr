@@ -28,9 +28,6 @@ jobs:
         run: nix fmt -- --fail-on-change
       - name: Evaluate Darwin package
         run: nix eval --raw .#packages.aarch64-darwin.default.name
-      - name: Build pinned local models
-        run: nix build .#packages.aarch64-darwin.models --no-link
-
       - name: Validate pinned model manifest
         run: |
           jq -e '.schema == 1 and (.artifacts | length >= 8)' models.json
@@ -65,6 +62,8 @@ jobs:
             extra-experimental-features = nix-command flakes
       - name: Build Apple Silicon package
         run: nix build .#packages.aarch64-darwin.default --no-link --print-out-paths > package-path
+      - name: Build pinned local models
+        run: nix build .#packages.aarch64-darwin.models --no-link
       - name: Inspect application bundle
         run: |
           app="$(cat package-path)/Applications/OpenWhispr.app"

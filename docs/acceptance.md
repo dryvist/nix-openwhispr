@@ -68,3 +68,15 @@ nix run github:dryvist/nix-openwhispr#verify-local
 The checklist is intentionally manual. Until a run is recorded against a real
 Apple Silicon Mac, these items remain unverified rather than being represented
 as CI-passed behavior.
+
+## Current evidence
+
+As of 2026-08-13, the pinned Apple Silicon application package has passed
+strict nested-code signature verification and Gatekeeper assessment with the
+upstream Developer ID/notarization intact. The Nix model package also builds
+from the hash-pinned manifest and installs the expected local cache layout.
+
+The interactive permission, menu-bar, dictation, meeting, speaker-fingerprint,
+and recovery items above remain unverified. They require a real logged-in
+Apple Silicon session; opening the application or passing a non-interactive
+bundle check is not sufficient evidence.
