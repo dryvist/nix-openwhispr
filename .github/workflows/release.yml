@@ -79,7 +79,7 @@ jobs:
           /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' dist/OpenWhispr.app/Contents/Info.plist
           codesign --verify --deep --strict dist/OpenWhispr.app
           spctl --assess --type execute dist/OpenWhispr.app
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact }}
           path: |
