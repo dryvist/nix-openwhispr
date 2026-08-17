@@ -78,7 +78,7 @@
         {
           default = pkgs.mkShell {
             packages = with pkgs; [
-              nixfmt-rfc-style
+              nixfmt
               statix
               deadnix
               shellcheck
@@ -115,6 +115,6 @@
         }
       );
 
-      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt);
     };
 }
