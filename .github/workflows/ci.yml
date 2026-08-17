@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: zizmorcore/zizmor-action@v0.2.0
+      - uses: zizmorcore/zizmor-action@v0.6.2
         with:
           persona: pedantic
           min-severity: medium
