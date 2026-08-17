@@ -16,14 +16,21 @@
       home-manager,
     }:
     let
-      systems = [
+      darwinSystems = [
         "aarch64-darwin"
         "x86_64-darwin"
       ];
-      forAllSystems = nixpkgs.lib.genAttrs systems;
+      allSystems = [
+        "aarch64-darwin"
+        "x86_64-darwin"
+        "aarch64-linux"
+        "x86_64-linux"
+      ];
+      forDarwinSystems = nixpkgs.lib.genAttrs darwinSystems;
+      forAllSystems = nixpkgs.lib.genAttrs allSystems;
     in
     {
-      packages = forAllSystems (
+      packages = forDarwinSystems (
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
@@ -36,7 +43,7 @@
         }
       );
 
-      apps = forAllSystems (
+      apps = forDarwinSystems (
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
@@ -97,6 +104,8 @@
             ${./scripts/check-publication.sh}
             touch $out
           '';
+        }
+        // nixpkgs.lib.optionalAttrs (nixpkgs.lib.elem system darwinSystems) {
           module =
             (home-manager.lib.homeManagerConfiguration {
               inherit pkgs;
@@ -115,6 +124,6 @@
         }
       );
 
-      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt);
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
     };
 }
