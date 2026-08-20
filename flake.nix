@@ -89,6 +89,7 @@
               statix
               deadnix
               shellcheck
+              ripgrep
             ];
           };
         }
