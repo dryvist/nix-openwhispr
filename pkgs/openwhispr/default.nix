@@ -22,7 +22,8 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     mkdir -p "$out/Applications"
     test -d OpenWhispr.app
-    /usr/bin/ditto --rsrc --extattr --acl OpenWhispr.app "$out/Applications/OpenWhispr.app"
+    # ponytail: no --acl — copied ACLs deny fixupPhase's chmod (EPERM); rsrc/xattrs still preserved
+    /usr/bin/ditto --rsrc --extattr OpenWhispr.app "$out/Applications/OpenWhispr.app"
   '';
   meta = {
     description = "Privacy-first local voice dictation, meeting transcription, and notes";
