@@ -3,9 +3,9 @@
   stdenvNoCC,
   undmg,
   fetchurl,
-  system,
 }:
 let
+  inherit (stdenvNoCC.hostPlatform) system;
   release = builtins.fromJSON (builtins.readFile ../../release.json);
   asset = release.releaseAssets.${system};
 in

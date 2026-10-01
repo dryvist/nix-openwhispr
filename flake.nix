@@ -101,10 +101,15 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          publication = pkgs.runCommand "openwhispr-publication-check" { } ''
-            ${./scripts/check-publication.sh}
-            touch $out
-          '';
+          publication =
+            pkgs.runCommand "openwhispr-publication-check"
+              {
+                nativeBuildInputs = [ pkgs.ripgrep ];
+              }
+              ''
+                bash ${self}/scripts/check-publication.sh
+                touch $out
+              '';
         }
         // nixpkgs.lib.optionalAttrs (nixpkgs.lib.elem system darwinSystems) {
           module =
