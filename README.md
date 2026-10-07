@@ -63,6 +63,10 @@ The module installs the application and manages a user launch agent. The
 application's own menu bar controls remain available independently of the
 launch agent.
 
+The launch agent starts the application's own named executable directly, so
+privacy and background-item entries carry the application's name rather than a
+shell or interpreter.
+
 The upstream application owns its menu-bar item and runtime model lifecycle.
 This integration pre-warms the selected local engine and links hash-pinned
 baseline models into the cache paths the upstream application actually reads.
