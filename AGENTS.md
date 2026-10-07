@@ -11,6 +11,9 @@ integration for the upstream OpenWhispr application.
 - Keep cloud, team, billing, and hosted API behavior explicitly service-backed.
 - Infrastructure belongs in the owning OpenTofu repository; guest configuration
   belongs in the owning Ansible repository.
+- Launchd jobs start a distinctly named executable (the application binary), never
+  `/bin/sh`, `bash`, `env`, or another interpreter; privacy (TCC) access belongs to that
+  named binary only.
 - Never commit credentials, private host details, local-machine paths, or
   private project identifiers.
 
