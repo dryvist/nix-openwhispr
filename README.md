@@ -34,14 +34,14 @@ ONNX Runtime dependency.
 ## Install with Nix
 
 ```sh
-nix run github:dryvist/nix-openwhispr
+nix run "github:dryvist/nix-openwhispr?ref=vN"
 ```
 
 For a Home Manager configuration:
 
 ```nix
 {
-  inputs.nix-openwhispr.url = "github:dryvist/nix-openwhispr";
+  inputs.nix-openwhispr.url = "github:dryvist/nix-openwhispr?ref=vN";
 
   outputs = { nix-openwhispr, ... }: {
     homeConfigurations.me = home-manager.lib.homeManagerConfiguration {
