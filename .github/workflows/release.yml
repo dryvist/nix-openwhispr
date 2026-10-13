@@ -108,6 +108,6 @@ jobs:
     permissions:
       contents: write
       checks: read
-    uses: dryvist/.github/.github/workflows/promote-major-tag.yml@26e6933fbebcf11bfbe6d675f9ce7b322ffd7de9 # v1.17.0
+    uses: dryvist/.github/.github/workflows/promote-major-tag.yml@ce494c27ecfa9cf31f285da511db5dad3099afe3 # v1.17.1
     with:
       tag: v${{ needs.source.outputs.version }}
