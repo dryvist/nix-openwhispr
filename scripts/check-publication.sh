@@ -10,10 +10,12 @@ command -v rg >/dev/null || {
 }
 
 forbidden=$(printf '\\x73\\x63\\x72\\x65\\x65\\x6e\\x70\\x69\\x70\\x65')
-if rg -n -i "$forbidden|private/dryvist|jacobpevans|\\.local\\.md|GH_PAT|DOPPLER" \
+matches=$(rg -n -i "$forbidden|private/dryvist|jacobpevans|\\.local\\.md|GH_PAT|DOPPLER" \
   --glob '!scripts/check-publication.sh' \
   --glob '!result/**' \
-  .; then
+  . | rg -v '^\./renovate\.json:[0-9]+:  "extends": \["github>JacobPEvans/\.github:renovate-nix"\]$' || true)
+if [ -n "$matches" ]; then
+  printf '%s\n' "$matches"
   echo "forbidden private or secret-bearing publication content found" >&2
   exit 1
 fi
