@@ -111,3 +111,5 @@ jobs:
     uses: JacobPEvans/.github/.github/workflows/promote-major-tag.yml@v1
     with:
       tag: v${{ needs.source.outputs.version }}
+    secrets:
+      GH_ACTION_RELEASE_PLEASE_PRIVATE_KEY: ${{ secrets.GH_ACTION_RELEASE_PLEASE_PRIVATE_KEY }}
