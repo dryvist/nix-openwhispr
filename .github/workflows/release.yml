@@ -51,7 +51,7 @@ jobs:
       matrix:
         include:
           - system: aarch64-darwin
-            runner: [self-hosted, openwhispr-macos, arm64]
+            runner: macos-14
             artifact: openwhispr-aarch64-darwin
           - system: x86_64-darwin
             runner: macos-15-intel
