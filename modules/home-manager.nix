@@ -12,9 +12,16 @@ in
 {
   options.programs.openwhispr = {
     enable = lib.mkEnableOption "OpenWhispr";
+    version = lib.mkOption {
+      type = lib.types.str;
+      default = "latest";
+      description = "OpenWhispr upstream version ('latest' or specific version string).";
+    };
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage ../pkgs/openwhispr { };
+      default = pkgs.callPackage ../pkgs/openwhispr {
+        inherit (cfg) version;
+      };
       defaultText = lib.literalExpression "openwhispr.packages.\${system}.default";
       description = "OpenWhispr application package.";
     };

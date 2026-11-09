@@ -3,16 +3,23 @@
   stdenvNoCC,
   undmg,
   fetchurl,
+  version ? "latest",
 }:
 let
   inherit (stdenvNoCC.hostPlatform) system;
-  release = builtins.fromJSON (builtins.readFile ../../release.json);
-  asset = release.releaseAssets.${system};
+  manifest = builtins.fromJSON (builtins.readFile ../../release.json);
+  selectedVersion =
+    if version == null || version == "latest" then manifest.upstreamVersion else version;
+  asset =
+    manifest.releases.${selectedVersion}.${system}
+      or (if selectedVersion == manifest.upstreamVersion then manifest.releaseAssets.${system} else null);
 in
-assert lib.assertMsg (asset != null) "Unsupported system: ${system}";
+assert lib.assertMsg (
+  asset != null
+) "Unsupported OpenWhispr version: ${selectedVersion} for system: ${system}";
 stdenvNoCC.mkDerivation {
   pname = "openwhispr";
-  version = release.upstreamVersion;
+  version = selectedVersion;
   src = fetchurl {
     inherit (asset) url hash;
   };
@@ -28,7 +35,7 @@ stdenvNoCC.mkDerivation {
   meta = {
     description = "Privacy-first local voice dictation, meeting transcription, and notes";
     homepage = "https://openwhispr.com/";
-    changelog = "https://github.com/OpenWhispr/openwhispr/releases/tag/${release.upstreamTag}";
+    changelog = "https://github.com/OpenWhispr/openwhispr/releases/tag/v${selectedVersion}";
     license = lib.licenses.mit;
     sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
     platforms = [
