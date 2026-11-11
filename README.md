@@ -34,28 +34,97 @@ ONNX Runtime dependency.
 ## Install with Nix
 
 ```sh
-nix run "github:dryvist/nix-openwhispr?ref=vN"
+nix run "github:dryvist/nix-openwhispr?ref=v1.11.0"
 ```
 
-For a Home Manager configuration:
+### Standalone Home Manager
 
 ```nix
 {
-  inputs.nix-openwhispr.url = "github:dryvist/nix-openwhispr?ref=vN";
-
-  outputs = { nix-openwhispr, ... }: {
-    homeConfigurations.me = home-manager.lib.homeManagerConfiguration {
-      modules = [
-        nix-openwhispr.homeManagerModules.default
-        {
-          programs.openwhispr = {
-            enable = true;
-            autoStart = true;
-          };
-        }
-      ];
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
+    home-manager = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-openwhispr.url = "github:dryvist/nix-openwhispr?ref=v1.11.0";
   };
+
+  outputs =
+    {
+      nixpkgs,
+      home-manager,
+      nix-openwhispr,
+      ...
+    }:
+    {
+      homeConfigurations."alice" = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+        modules = [
+          nix-openwhispr.homeManagerModules.default
+          {
+            programs.openwhispr = {
+              enable = true;
+              autoStart = true;
+              notesDirectory = "/Users/alice/notes/openwhispr";
+              openaiBaseUrl = "http://localhost:4000/v1";
+            };
+          }
+        ];
+      };
+    };
+}
+```
+
+### nix-darwin integration
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
+    nix-darwin = {
+      url = "github:LnL7/nix-darwin/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    home-manager = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-openwhispr.url = "github:dryvist/nix-openwhispr?ref=v1.11.0";
+  };
+
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nix-darwin,
+      home-manager,
+      nix-openwhispr,
+      ...
+    }:
+    {
+      darwinConfigurations."my-mac" = nix-darwin.lib.darwinSystem {
+        system = "aarch64-darwin";
+        modules = [
+          home-manager.darwinModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              users.alice = {
+                imports = [ nix-openwhispr.homeManagerModules.default ];
+                programs.openwhispr = {
+                  enable = true;
+                  autoStart = true;
+                  notesDirectory = "/Users/alice/notes/openwhispr";
+                  openaiBaseUrl = "http://localhost:4000/v1";
+                };
+              };
+            };
+          }
+        ];
+      };
+    };
 }
 ```
 
@@ -67,16 +136,43 @@ The launch agent starts the application's own named executable directly, so
 privacy and background-item entries carry the application's name rather than a
 shell or interpreter.
 
-The upstream application owns its menu-bar item and runtime model lifecycle.
-This integration pre-warms the selected local engine and links hash-pinned
-baseline models into the cache paths the upstream application actually reads.
-The upstream application does not expose a supported declarative setting for
-its first-run processing mode: select **Local** for dictation, meetings, and
-audio import in its Settings once. This package deliberately does not mutate
-its internal browser storage to simulate that selection. The package preserves
-and verifies the upstream Developer ID signature and notarization; it does not
-replace them with an ad-hoc signature. `models.json` records the helper and
-model provenance used by the pinned release.
+## Module options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `programs.openwhispr.enable` | boolean | `false` | Enable OpenWhispr and its Home Manager integration. |
+| `programs.openwhispr.version` | string | `"latest"` | Upstream release version to package (`"latest"`, `"1.11.0"`, `"1.8.3"`). |
+| `programs.openwhispr.package` | package | `openwhispr.packages.${system}.default` | Application package derivation. |
+| `programs.openwhispr.models` | package | `openwhispr.packages.${system}.models` | Local models package linked into upstream cache paths. |
+| `programs.openwhispr.modelBootstrap` | boolean | `true` | Link hash-pinned local Whisper, diarization, and semantic-search models into `~/.cache/openwhispr`. |
+| `programs.openwhispr.autoStart` | boolean | `true` | Start OpenWhispr at user login via a macOS launchd agent. |
+| `programs.openwhispr.launchdLabel` | string | `"com.dryvist.nix-openwhispr"` | Label identifier for the launchd agent plist. |
+| `programs.openwhispr.localTranscriptionProvider` | `"whisper"` or `"parakeet"` | `"whisper"` | Local engine pre-warmed by OpenWhispr at startup (`LOCAL_TRANSCRIPTION_PROVIDER`). |
+| `programs.openwhispr.whisperModel` | string | `"base"` | Pinned Whisper model name pre-warmed for local transcription (`LOCAL_WHISPER_MODEL`). |
+| `programs.openwhispr.parakeetModel` | string | `"parakeet-tdt-0.6b-v3"` | Parakeet model pre-warmed when local transcription provider is parakeet (`PARAKEET_MODEL`). |
+| `programs.openwhispr.notesDirectory` | null or string (absolute path) | `null` | Target directory where OpenWhispr writes markdown notes. When set, creates an out-of-store symlink from `~/Library/Application Support/open-whispr/notes` to this directory. Must be an absolute path. |
+| `programs.openwhispr.openaiBaseUrl` | null or string | `null` | Base URL for OpenAI-compatible local model router (sets `OPENAI_BASE_URL`). |
+| `programs.openwhispr.environment` | attribute set of strings | `{}` | Additional non-secret environment variables passed to the session and launchd agent. Do not place credentials or secrets here. |
+
+## Runtime settings
+
+OpenWhispr combines declarative Nix packaging with macOS-managed state:
+
+- **Declarative (managed by Nix and Home Manager)**:
+  - Application binary packaging and version pinning.
+  - Hash-pinned baseline model cache layout in `~/.cache/openwhispr/`.
+  - User launch agent lifecycle (`~/Library/LaunchAgents/com.dryvist.nix-openwhispr.plist`).
+  - Session and launchd environment variables (`OPENWHISPR_CHANNEL`, `LOCAL_TRANSCRIPTION_PROVIDER`, `LOCAL_WHISPER_MODEL`, `PARAKEET_MODEL`, `OPENAI_BASE_URL`, and custom `environment`).
+  - Target directory symlink for notes (`~/Library/Application Support/open-whispr/notes` -> `cfg.notesDirectory`).
+
+- **One-time UI configuration (set once in OpenWhispr Settings)**:
+  - **Local processing mode**: Open Settings and set Dictation, Meeting, and Audio Import transcription modes to **Local**. Upstream stores this in internal browser storage (IndexedDB/localStorage) without a declarative configuration interface.
+  - **Save notes as files**: In Settings > Notes, enable **Save notes as files**. When enabled, OpenWhispr writes markdown notes to `~/Library/Application Support/open-whispr/notes`, which points to your configured `notesDirectory`.
+  - **macOS system permissions**: Grant Microphone, Accessibility, Input Monitoring, and System Audio permissions in macOS System Settings when prompted on first use.
+
+The package preserves and verifies the upstream Developer ID signature and
+notarization; it does not replace them with an ad-hoc signature. `models.json`
+records the helper and model provenance used by the pinned release.
 
 Home Manager enables the pinned Whisper, diarization, and semantic-search
 bootstrap by default. Parakeet and local LLM models remain owned by the

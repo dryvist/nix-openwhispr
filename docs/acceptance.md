@@ -79,8 +79,8 @@ as CI-passed behavior.
 
 ## Current evidence
 
-As of 2026-08-13, the pinned Apple Silicon application package at
-`/nix/store/y05ixyq29fj39d6fz7zxgw8kw34pz8fd-openwhispr-1.8.3` passed strict
+As of 2026-10-29, the pinned Apple Silicon application package at
+`/nix/store/gr1320wnbxzmjm8xsn17pwirdqp1kagq-openwhispr-1.11.0` passed strict
 nested-code signature verification and Gatekeeper assessment. Its bundle
 reports identifier `com.gizmolabs.openwhispr`, the upstream Developer ID
 certificate, Team ID `T832773L2J`, and a stapled notarization ticket. The Nix

@@ -76,6 +76,12 @@
       );
 
       homeManagerModules.default = import ./modules/home-manager.nix;
+      homeModules.default = self.homeManagerModules.default;
+
+      overlays.default = final: prev: {
+        openwhispr = self.packages.${final.stdenv.hostPlatform.system}.openwhispr;
+        openwhispr-models = self.packages.${final.stdenv.hostPlatform.system}.models;
+      };
 
       devShells = forAllSystems (
         system:
@@ -124,6 +130,29 @@
                     stateVersion = "26.05";
                   };
                   programs.openwhispr.enable = true;
+                }
+              ];
+            }).activationPackage;
+          module-full =
+            (home-manager.lib.homeManagerConfiguration {
+              inherit pkgs;
+              modules = [
+                ./modules/home-manager.nix
+                {
+                  home = {
+                    username = "ci";
+                    homeDirectory = "/Users/ci";
+                    stateVersion = "26.05";
+                  };
+                  programs.openwhispr = {
+                    enable = true;
+                    notesDirectory = "/tmp/openwhispr";
+                    openaiBaseUrl = "http://localhost:8000/v1";
+                    environment = {
+                      FOO = "bar";
+                    };
+                    launchdLabel = "custom.label";
+                  };
                 }
               ];
             }).activationPackage;
