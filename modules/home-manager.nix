@@ -8,6 +8,16 @@ let
   cfg = config.programs.openwhispr;
   inherit (cfg) models package;
   app = "${package}/Applications/OpenWhispr.app";
+  env = {
+    OPENWHISPR_CHANNEL = "production";
+    LOCAL_TRANSCRIPTION_PROVIDER = cfg.localTranscriptionProvider;
+    LOCAL_WHISPER_MODEL = cfg.whisperModel;
+    PARAKEET_MODEL = cfg.parakeetModel;
+  }
+  // lib.optionalAttrs (cfg.openaiBaseUrl != null) {
+    OPENAI_BASE_URL = cfg.openaiBaseUrl;
+  }
+  // cfg.environment;
 in
 {
   options.programs.openwhispr = {
@@ -59,55 +69,94 @@ in
       default = "parakeet-tdt-0.6b-v3";
       description = "Parakeet model pre-warmed when localTranscriptionProvider is parakeet.";
     };
+    notesDirectory = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "/Users/alice/notes/openwhispr";
+      description = ''
+        Directory where OpenWhispr writes notes when "Save notes as files" is enabled.
+        Symlinks ~/Library/Application Support/open-whispr/notes to this target directory.
+      '';
+    };
+    openaiBaseUrl = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "http://localhost:4000/v1";
+      description = "Base URL for local OpenAI-compatible routers (sets OPENAI_BASE_URL).";
+    };
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      example = {
+        DEBUG = "true";
+      };
+      description = ''
+        Extra non-secret environment variables passed to the application session and launchd agent.
+        Warning: Do not place API keys, tokens, or credentials here; launchd environment plists
+        are readable by any process running under your user account.
+      '';
+    };
+    launchdLabel = lib.mkOption {
+      type = lib.types.str;
+      default = "com.dryvist.nix-openwhispr";
+      description = "Label identifier for the launchd agent plist.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = pkgs.stdenv.isDarwin;
+        message = "nix-openwhispr only supports macOS (darwin) platforms.";
+      }
+      {
+        assertion = cfg.notesDirectory != null -> lib.strings.hasPrefix "/" cfg.notesDirectory;
+        message = "programs.openwhispr.notesDirectory must be an absolute path.";
+      }
+    ];
+
     home = {
       packages = [ package ];
-      sessionVariables = {
-        OPENWHISPR_CHANNEL = "production";
-        LOCAL_TRANSCRIPTION_PROVIDER = cfg.localTranscriptionProvider;
-        LOCAL_WHISPER_MODEL = cfg.whisperModel;
-        PARAKEET_MODEL = cfg.parakeetModel;
-      };
-      file = lib.mkIf cfg.modelBootstrap {
-        ".cache/openwhispr/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx" = {
-          source = "${models}/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx";
-          force = true;
-        };
-        ".cache/openwhispr/diarization-models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx" = {
-          source = "${models}/diarization-models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx";
-          force = true;
-        };
-        ".cache/openwhispr/diarization-models/silero_vad.onnx" = {
-          source = "${models}/diarization-models/silero_vad.onnx";
-          force = true;
-        };
-        ".cache/openwhispr/embedding-models/all-MiniLM-L6-v2/model.onnx" = {
-          source = "${models}/embedding-models/all-MiniLM-L6-v2/model.onnx";
-          force = true;
-        };
-        ".cache/openwhispr/embedding-models/all-MiniLM-L6-v2/tokenizer.json" = {
-          source = "${models}/embedding-models/all-MiniLM-L6-v2/tokenizer.json";
-          force = true;
-        };
-        ".cache/openwhispr/whisper-models/ggml-base.bin" = {
-          source = "${models}/whisper-models/ggml-base.bin";
-          force = true;
-        };
-      };
+      sessionVariables = env;
+      file = lib.mkMerge [
+        (lib.mkIf cfg.modelBootstrap {
+          ".cache/openwhispr/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx" = {
+            source = "${models}/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx";
+            force = true;
+          };
+          ".cache/openwhispr/diarization-models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx" = {
+            source = "${models}/diarization-models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx";
+            force = true;
+          };
+          ".cache/openwhispr/diarization-models/silero_vad.onnx" = {
+            source = "${models}/diarization-models/silero_vad.onnx";
+            force = true;
+          };
+          ".cache/openwhispr/embedding-models/all-MiniLM-L6-v2/model.onnx" = {
+            source = "${models}/embedding-models/all-MiniLM-L6-v2/model.onnx";
+            force = true;
+          };
+          ".cache/openwhispr/embedding-models/all-MiniLM-L6-v2/tokenizer.json" = {
+            source = "${models}/embedding-models/all-MiniLM-L6-v2/tokenizer.json";
+            force = true;
+          };
+          ".cache/openwhispr/whisper-models/ggml-base.bin" = {
+            source = "${models}/whisper-models/ggml-base.bin";
+            force = true;
+          };
+        })
+        (lib.mkIf (cfg.notesDirectory != null) {
+          "Library/Application Support/open-whispr/notes".source =
+            config.lib.file.mkOutOfStoreSymlink cfg.notesDirectory;
+        })
+      ];
     };
     launchd.agents.openwhispr = lib.mkIf cfg.autoStart {
       enable = true;
       config = {
-        Label = "com.dryvist.nix-openwhispr";
+        Label = cfg.launchdLabel;
         ProgramArguments = [ "${app}/Contents/MacOS/OpenWhispr" ];
-        EnvironmentVariables = {
-          OPENWHISPR_CHANNEL = "production";
-          LOCAL_TRANSCRIPTION_PROVIDER = cfg.localTranscriptionProvider;
-          LOCAL_WHISPER_MODEL = cfg.whisperModel;
-          PARAKEET_MODEL = cfg.parakeetModel;
-        };
+        EnvironmentVariables = env;
         RunAtLoad = true;
         KeepAlive = {
           SuccessfulExit = false;
