@@ -144,15 +144,15 @@ shell or interpreter.
 | `programs.openwhispr.version` | string | `"latest"` | Upstream release version to package (`"latest"`, `"1.11.0"`, `"1.8.3"`). |
 | `programs.openwhispr.package` | package | `openwhispr.packages.${system}.default` | Application package derivation. |
 | `programs.openwhispr.models` | package | `openwhispr.packages.${system}.models` | Local models package linked into upstream cache paths. |
-| `programs.openwhispr.modelBootstrap` | boolean | `true` | Link hash-pinned local Whisper, diarization, and semantic-search models into `~/.cache/openwhispr`. |
+| `programs.openwhispr.modelBootstrap` | boolean | `true` | Link hash-pinned local Whisper, diarization, and search models. |
 | `programs.openwhispr.autoStart` | boolean | `true` | Start OpenWhispr at user login via a macOS launchd agent. |
 | `programs.openwhispr.launchdLabel` | string | `"com.dryvist.nix-openwhispr"` | Label identifier for the launchd agent plist. |
-| `programs.openwhispr.localTranscriptionProvider` | `"whisper"` or `"parakeet"` | `"whisper"` | Local engine pre-warmed by OpenWhispr at startup (`LOCAL_TRANSCRIPTION_PROVIDER`). |
-| `programs.openwhispr.whisperModel` | string | `"base"` | Pinned Whisper model name pre-warmed for local transcription (`LOCAL_WHISPER_MODEL`). |
-| `programs.openwhispr.parakeetModel` | string | `"parakeet-tdt-0.6b-v3"` | Parakeet model pre-warmed when local transcription provider is parakeet (`PARAKEET_MODEL`). |
-| `programs.openwhispr.notesDirectory` | null or string (absolute path) | `null` | Target directory where OpenWhispr writes markdown notes. When set, creates an out-of-store symlink from `~/Library/Application Support/open-whispr/notes` to this directory. Must be an absolute path. |
+| `programs.openwhispr.localTranscriptionProvider` | enum | `"whisper"` | Local engine pre-warmed at startup (`"whisper"` or `"parakeet"`). |
+| `programs.openwhispr.whisperModel` | string | `"base"` | Pinned Whisper model pre-warmed for local transcription (`LOCAL_WHISPER_MODEL`). |
+| `programs.openwhispr.parakeetModel` | string | `"parakeet-tdt-0.6b-v3"` | Parakeet model pre-warmed when provider is parakeet (`PARAKEET_MODEL`). |
+| `programs.openwhispr.notesDirectory` | null or path | `null` | Notes directory linked from `~/Library/Application Support/open-whispr/notes`. |
 | `programs.openwhispr.openaiBaseUrl` | null or string | `null` | Base URL for OpenAI-compatible local model router (sets `OPENAI_BASE_URL`). |
-| `programs.openwhispr.environment` | attribute set of strings | `{}` | Additional non-secret environment variables passed to the session and launchd agent. Do not place credentials or secrets here. |
+| `programs.openwhispr.environment` | attrs of strings | `{}` | Additional non-secret environment variables passed to session and launchd agent. |
 
 ## Runtime settings
 
@@ -161,14 +161,26 @@ OpenWhispr combines declarative Nix packaging with macOS-managed state:
 - **Declarative (managed by Nix and Home Manager)**:
   - Application binary packaging and version pinning.
   - Hash-pinned baseline model cache layout in `~/.cache/openwhispr/`.
-  - User launch agent lifecycle (`~/Library/LaunchAgents/com.dryvist.nix-openwhispr.plist`).
-  - Session and launchd environment variables (`OPENWHISPR_CHANNEL`, `LOCAL_TRANSCRIPTION_PROVIDER`, `LOCAL_WHISPER_MODEL`, `PARAKEET_MODEL`, `OPENAI_BASE_URL`, and custom `environment`).
-  - Target directory symlink for notes (`~/Library/Application Support/open-whispr/notes` -> `cfg.notesDirectory`).
+  - User launch agent lifecycle
+    (`~/Library/LaunchAgents/com.dryvist.nix-openwhispr.plist`).
+  - Session and launchd environment variables (`OPENWHISPR_CHANNEL`,
+    `LOCAL_TRANSCRIPTION_PROVIDER`, `LOCAL_WHISPER_MODEL`, `PARAKEET_MODEL`,
+    `OPENAI_BASE_URL`, and custom `environment`).
+  - Target directory symlink for notes
+    (`~/Library/Application Support/open-whispr/notes` -> `cfg.notesDirectory`).
 
 - **One-time UI configuration (set once in OpenWhispr Settings)**:
-  - **Local processing mode**: Open Settings and set Dictation, Meeting, and Audio Import transcription modes to **Local**. Upstream stores this in internal browser storage (IndexedDB/localStorage) without a declarative configuration interface.
-  - **Save notes as files**: In Settings > Notes, enable **Save notes as files**. When enabled, OpenWhispr writes markdown notes to `~/Library/Application Support/open-whispr/notes`, which points to your configured `notesDirectory`.
-  - **macOS system permissions**: Grant Microphone, Accessibility, Input Monitoring, and System Audio permissions in macOS System Settings when prompted on first use.
+  - **Local processing mode**: Open Settings and set Dictation, Meeting, and
+    Audio Import transcription modes to **Local**. Upstream stores this in
+    internal browser storage (IndexedDB/localStorage) without a declarative
+    configuration interface.
+  - **Save notes as files**: In Settings > Notes, enable **Save notes as
+    files**. When enabled, OpenWhispr writes markdown notes to
+    `~/Library/Application Support/open-whispr/notes`, which points to your
+    configured `notesDirectory`.
+  - **macOS system permissions**: Grant Microphone, Accessibility, Input
+    Monitoring, and System Audio permissions in macOS System Settings when
+    prompted on first use.
 
 The package preserves and verifies the upstream Developer ID signature and
 notarization; it does not replace them with an ad-hoc signature. `models.json`

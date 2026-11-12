@@ -1,0 +1,16 @@
+---
+# Copy of the JacobPEvans/.github canonical .markdownlint-cli2.yaml plus
+# repo-specific ignores. Source of truth:
+# https://github.com/JacobPEvans/.github/blob/main/.markdownlint-cli2.yaml
+
+config:
+  MD013:
+    line_length: 160
+    tables: true
+    strict: true
+    # `heading_line_length` and `code_block_line_length` deliberately not set.
+    # An 80-character ceiling is an anti-pattern for modern displays.
+
+ignores:
+  - "CHANGELOG.md"
+  - ".git/**"
