@@ -57,7 +57,7 @@ in
         running=$?
         set -e
         if [ "$running" -eq 0 ]; then
-          echo "openwhispr app data: skipped, OpenWhispr is running"
+          echo "openwhispr app data: skipped, OpenWhispr is running; quit it and run: $0 '$db'"
           exit 0
         elif [ "$running" -ne 1 ]; then
           echo "openwhispr app data: skipped, could not check whether OpenWhispr is running"
@@ -69,8 +69,12 @@ in
             exit 0
           fi
         '') runtimePaths}
-        sqlite3 -bail "$db" < ${sql}
-        echo "openwhispr app data: applied"
+        # The script runs in one transaction, so a failure leaves the database unchanged.
+        if sqlite3 -bail "$db" < ${sql}; then
+          echo "openwhispr app data: applied"
+        else
+          echo "openwhispr app data: failed and rolled back, database unchanged" >&2
+        fi
       '';
     };
 }

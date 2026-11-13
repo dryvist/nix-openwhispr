@@ -110,12 +110,13 @@ in
       default = [ ];
       example = [
         "Meetings"
-        "clients/acme"
+        "clients-acme"
       ];
       description = ''
         Folder names to ensure in the private space of the application database.
-        Each name is stored as written, so a slash such as `clients/acme` stays part
-        of the name. Existing folders are not changed.
+        Existing folders are not changed. The application mirrors a name that contains
+        a slash to an encoded directory, so use a separator such as `-` for readable
+        mirror directories.
       '';
     };
     dictionary = lib.mkOption {
@@ -238,7 +239,7 @@ in
       packages = [ package ];
       sessionVariables = env;
       activation = lib.optionalAttrs hasAppData {
-        openwhisperAppData = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        openwhisprAppData = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           run ${appDataApply}/bin/openwhispr-apply-app-data ${lib.escapeShellArg appDatabase}
         '';
       };
