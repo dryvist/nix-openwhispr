@@ -78,7 +78,7 @@
       homeManagerModules.default = import ./modules/home-manager.nix;
       homeModules.default = self.homeManagerModules.default;
 
-      overlays.default = final: prev: {
+      overlays.default = final: _prev: {
         openwhispr = self.packages.${final.stdenv.hostPlatform.system}.openwhispr;
         openwhispr-models = self.packages.${final.stdenv.hostPlatform.system}.models;
       };
