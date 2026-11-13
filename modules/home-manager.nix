@@ -18,6 +18,15 @@ let
     OPENAI_BASE_URL = cfg.openaiBaseUrl;
   }
   // cfg.environment;
+  appData = import ./app-data.nix { inherit lib pkgs; };
+  appDatabase = "${config.home.homeDirectory}/Library/Application Support/open-whispr/transcriptions.db";
+  actionList = lib.mapAttrsToList (name: action: action // { inherit name; }) cfg.actions;
+  hasAppData =
+    cfg.folders != [ ] || cfg.dictionary != [ ] || cfg.dictionaryFile != null || cfg.actions != { };
+  appDataApply = appData.mkApply {
+    inherit (cfg) folders dictionary dictionaryFile;
+    actions = actionList;
+  };
 in
 {
   options.programs.openwhispr = {
@@ -96,6 +105,91 @@ in
         are readable by any process running under your user account.
       '';
     };
+    folders = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = [
+        "Meetings"
+        "clients-acme"
+      ];
+      description = ''
+        Folder names to ensure in the private space of the application database.
+        Existing folders are not changed. The application mirrors a name that contains
+        a slash to an encoded directory, so use a separator such as `-` for readable
+        mirror directories.
+      '';
+    };
+    dictionary = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = [ "Acme Corp" ];
+      description = ''
+        Words to ensure in the custom dictionary. Matching ignores case, so a word
+        that already exists in another case is kept as it is.
+      '';
+    };
+    dictionaryFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "/Users/alice/.config/openwhispr/dictionary.txt";
+      description = ''
+        Absolute runtime path to a text file with one word per line. Blank lines and
+        lines that start with `#` are ignored. The file is read at activation, so its
+        contents never enter the Nix store.
+      '';
+    };
+    actions = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options = {
+            kind = lib.mkOption {
+              type = lib.types.enum [
+                "action"
+                "template"
+              ];
+              default = "action";
+              description = "Kind of the action row in the application database.";
+            };
+            description = lib.mkOption {
+              type = lib.types.str;
+              default = "";
+              description = "Short description shown with the action.";
+            };
+            icon = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              example = "notes";
+              description = "Icon name. Null uses the application default, `sparkles`.";
+            };
+            prompt = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Prompt text. Set exactly one of `prompt` or `promptFile`.";
+            };
+            promptFile = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = ''
+                Absolute runtime path to a file that holds the prompt. The file is read
+                at activation, and its contents are used as they are.
+              '';
+            };
+          };
+        }
+      );
+      default = { };
+      example = {
+        "Summarize meeting" = {
+          icon = "notes";
+          prompt = "Summarize the meeting in three bullets.";
+        };
+      };
+      description = ''
+        Actions and templates to ensure in the application database. The attribute
+        name is the action name. A user action is updated when a value differs.
+        Built-in actions are never changed.
+      '';
+    };
     launchdLabel = lib.mkOption {
       type = lib.types.str;
       default = "com.dryvist.nix-openwhispr";
@@ -113,11 +207,42 @@ in
         assertion = cfg.notesDirectory != null -> lib.strings.hasPrefix "/" cfg.notesDirectory;
         message = "programs.openwhispr.notesDirectory must be an absolute path.";
       }
+      {
+        assertion = lib.all (name: name != "") cfg.folders;
+        message = "programs.openwhispr.folders entries must not be empty.";
+      }
+      {
+        assertion = lib.all (word: word != "") cfg.dictionary;
+        message = "programs.openwhispr.dictionary entries must not be empty.";
+      }
+      {
+        assertion = cfg.dictionaryFile == null || lib.strings.hasPrefix "/" cfg.dictionaryFile;
+        message = "programs.openwhispr.dictionaryFile must be an absolute path.";
+      }
+      {
+        assertion = lib.all (action: action.name != "") actionList;
+        message = "programs.openwhispr.actions names must not be empty.";
+      }
+      {
+        assertion = lib.all (action: (action.prompt == null) != (action.promptFile == null)) actionList;
+        message = "Each programs.openwhispr.actions entry must set exactly one of prompt or promptFile.";
+      }
+      {
+        assertion = lib.all (
+          action: action.promptFile == null || lib.strings.hasPrefix "/" action.promptFile
+        ) actionList;
+        message = "programs.openwhispr.actions.<name>.promptFile must be an absolute path.";
+      }
     ];
 
     home = {
       packages = [ package ];
       sessionVariables = env;
+      activation = lib.optionalAttrs hasAppData {
+        openwhisprAppData = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          run ${appDataApply}/bin/openwhispr-apply-app-data ${lib.escapeShellArg appDatabase}
+        '';
+      };
       file = lib.mkMerge [
         (lib.mkIf cfg.modelBootstrap {
           ".cache/openwhispr/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx" = {

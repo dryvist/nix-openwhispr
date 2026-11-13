@@ -78,7 +78,7 @@
       homeManagerModules.default = import ./modules/home-manager.nix;
       homeModules.default = self.homeManagerModules.default;
 
-      overlays.default = final: prev: {
+      overlays.default = final: _prev: {
         openwhispr = self.packages.${final.stdenv.hostPlatform.system}.openwhispr;
         openwhispr-models = self.packages.${final.stdenv.hostPlatform.system}.models;
       };
@@ -105,8 +105,15 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          appData = import ./modules/app-data.nix {
+            inherit (nixpkgs) lib;
+            inherit pkgs;
+          };
         in
         {
+          app-data-seed = import ./tests/app-data-seed.nix {
+            inherit pkgs appData;
+          };
           publication =
             pkgs.runCommand "openwhispr-publication-check"
               {
@@ -152,6 +159,22 @@
                       FOO = "bar";
                     };
                     launchdLabel = "custom.label";
+                    folders = [
+                      "Meetings"
+                      "clients/acme"
+                    ];
+                    dictionary = [ "Acme Corp" ];
+                    dictionaryFile = "/Users/ci/openwhispr/dictionary.txt";
+                    actions = {
+                      "Summarize meeting" = {
+                        icon = "notes";
+                        prompt = "Summarize the meeting in three bullets.";
+                      };
+                      "Review draft" = {
+                        kind = "template";
+                        promptFile = "/Users/ci/openwhispr/review-prompt.txt";
+                      };
+                    };
                   };
                 }
               ];
