@@ -31,7 +31,7 @@ upstream dependencies permit; upstream currently documents that local speaker
 identification and voice fingerprints are unavailable on Intel because of its
 ONNX Runtime dependency.
 
-## Install with Nix
+## Installation
 
 ```sh
 nix run "github:dryvist/nix-openwhispr?ref=v1.11.0"
@@ -136,7 +136,11 @@ The launch agent starts the application's own named executable directly, so
 privacy and background-item entries carry the application's name rather than a
 shell or interpreter.
 
-## Module options
+## Usage
+
+Set options under `programs.openwhispr` in a Home Manager configuration.
+
+### Module options
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -215,8 +219,10 @@ only when one of these options is set.
   the data already matches.
 
 The step skips and leaves the database unchanged when the database file is
-missing, when OpenWhispr is running, or when a runtime file cannot be read. A
-failed write rolls back and fails activation.
+missing, when OpenWhispr is running, or when a runtime file cannot be read. When
+OpenWhispr is running, the message names the command that applies the data
+after you quit it. A failed write rolls back, prints an error, and lets
+activation continue.
 
 The step writes the application database directly. Upstream does not document
 that schema, so a future upstream release can change it.
