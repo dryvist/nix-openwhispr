@@ -153,6 +153,10 @@ shell or interpreter.
 | `programs.openwhispr.notesDirectory` | null or path | `null` | Notes directory linked from `~/Library/Application Support/open-whispr/notes`. |
 | `programs.openwhispr.openaiBaseUrl` | null or string | `null` | Base URL for OpenAI-compatible local model router (sets `OPENAI_BASE_URL`). |
 | `programs.openwhispr.environment` | attrs of strings | `{}` | Additional non-secret environment variables passed to session and launchd agent. |
+| `programs.openwhispr.folders` | list of strings | `[]` | Folder names to ensure in the application database. A slash stays part of the name. |
+| `programs.openwhispr.dictionary` | list of strings | `[]` | Custom dictionary words to ensure. Matching ignores case. |
+| `programs.openwhispr.dictionaryFile` | null or path | `null` | Runtime path to a file with one dictionary word per line. Read at activation. |
+| `programs.openwhispr.actions` | attrs of submodules | `{}` | Actions and templates to ensure, keyed by action name. Each sets `prompt` or `promptFile`. |
 
 ## Runtime settings
 
@@ -168,6 +172,8 @@ OpenWhispr combines declarative Nix packaging with macOS-managed state:
     `OPENAI_BASE_URL`, and custom `environment`).
   - Target directory symlink for notes
     (`~/Library/Application Support/open-whispr/notes` -> `cfg.notesDirectory`).
+  - Folders, dictionary words, and actions in the application database, when
+    configured (see [Declarative app data](#declarative-app-data)).
 
 - **One-time UI configuration (set once in OpenWhispr Settings)**:
   - **Local processing mode**: Open Settings and set Dictation, Meeting, and
@@ -190,6 +196,34 @@ Home Manager enables the pinned Whisper, diarization, and semantic-search
 bootstrap by default. Parakeet and local LLM models remain owned by the
 upstream model manager or the consuming `nix-ai`/`nix-darwin` configuration;
 this package does not duplicate or scan the shared Hugging Face/MLX cache.
+
+## Declarative app data
+
+Activation writes the configured folders, dictionary words, and actions into
+the application database at
+`~/Library/Application Support/open-whispr/transcriptions.db`. The step runs
+only when one of these options is set.
+
+- Folders go to the private space with no account. A missing folder is added.
+  A soft-deleted folder is restored when no active folder has the same name.
+- Dictionary words go to the custom dictionary. A soft-deleted word is restored
+  when no active word matches it, ignoring case.
+- Actions match by name. A user action is updated when a value differs. A
+  built-in action is never changed, and a configured name that a built-in
+  action uses is skipped.
+- The step never deletes or renames a row. A second run changes nothing when
+  the data already matches.
+
+The step skips and leaves the database unchanged when the database file is
+missing, when OpenWhispr is running, or when a runtime file cannot be read. A
+failed write rolls back and fails activation.
+
+The step writes the application database directly. Upstream does not document
+that schema, so a future upstream release can change it.
+
+File options are runtime paths. The module reads them at activation and never
+copies their contents into the Nix store. Inline `prompt` values are stored in
+the Nix store.
 
 ## Plan-boundary policy
 
