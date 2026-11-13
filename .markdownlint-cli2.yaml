@@ -1,7 +1,7 @@
 ---
-# Copy of the JacobPEvans/.github canonical .markdownlint-cli2.yaml plus
-# repo-specific ignores. Source of truth:
-# https://github.com/JacobPEvans/.github/blob/main/.markdownlint-cli2.yaml
+# Copy of the canonical .markdownlint-cli2.yaml from the organization's shared
+# .github repository, plus repo-specific ignores. Refresh it from that
+# repository's default branch.
 
 config:
   MD013:
