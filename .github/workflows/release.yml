@@ -108,9 +108,18 @@ jobs:
           subject-path: dist/*.zip
       - name: Publish release
         env:
+          EVENT_NAME: ${{ github.event_name }}
           GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.sha }}
           VERSION: ${{ needs.source.outputs.version }}
-        run: gh release create "v$VERSION" dist/* --generate-notes --verify-tag
+        run: |
+          args=(--generate-notes)
+          if [ "$EVENT_NAME" = workflow_dispatch ]; then
+            args+=(--target "$TARGET_SHA")
+          else
+            args+=(--verify-tag)
+          fi
+          gh release create "v$VERSION" dist/* "${args[@]}"
 
   promote-major-tag:
     needs: [source, publish]
