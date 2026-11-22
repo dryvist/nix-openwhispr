@@ -180,10 +180,19 @@ OpenWhispr combines declarative Nix packaging with macOS-managed state:
     configured (see [Declarative app data](#declarative-app-data)).
 
 - **One-time UI configuration (set once in OpenWhispr Settings)**:
-  - **Local processing mode**: Open Settings and set Dictation, Meeting, and
-    Audio Import transcription modes to **Local**. Upstream stores this in
-    internal browser storage (IndexedDB/localStorage) without a declarative
-    configuration interface.
+  - **Processing mode**: Open Settings and set Dictation, Meeting, and
+    Audio Import transcription modes to **Local**, or to **Self-hosted** to
+    use a shared OpenAI-compatible router. Upstream stores these settings in
+    renderer `localStorage` without a declarative configuration interface.
+  - **Self-hosted router (optional)**: Set transcription to **Self-hosted**
+    with the router base URL (for example `http://127.0.0.1:4100/v1`) and a
+    speech-to-text model alias; OpenWhispr posts to
+    `<base>/audio/transcriptions`. Set the cleanup (polish) scope to
+    **Self-hosted** with the same base URL and a chat model alias; OpenWhispr
+    posts to `<base>/chat/completions`. With both scopes self-hosted,
+    OpenWhispr stops its bundled Whisper/Parakeet and LLM servers. Leave
+    `programs.openwhispr.modelBootstrap` enabled only when a scope stays on
+    **Local**.
   - **Save notes as files**: In Settings > Notes, enable **Save notes as
     files**. When enabled, OpenWhispr writes markdown notes to
     `~/Library/Application Support/open-whispr/notes`, which points to your
