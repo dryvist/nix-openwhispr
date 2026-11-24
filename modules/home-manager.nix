@@ -27,6 +27,28 @@ let
     inherit (cfg) folders dictionary dictionaryFile;
     actions = actionList;
   };
+  rendererSettings = import ./settings.nix { inherit lib pkgs; };
+  settingsStore = "${config.home.homeDirectory}/Library/Application Support/open-whispr/Local Storage/leveldb";
+  allSettings =
+    rendererSettings.mkInferenceSettings {
+      scopes = cfg.inference;
+      inherit (cfg) transcription;
+    }
+    // cfg.settings;
+  settingsApply = rendererSettings.mkApply { settings = allSettings; };
+  endpointType = lib.types.submodule {
+    options = {
+      url = lib.mkOption {
+        type = lib.types.str;
+        example = "http://127.0.0.1:4100/v1";
+        description = "Base URL of an OpenAI-compatible server. A missing `/v1` suffix is added by the app.";
+      };
+      model = lib.mkOption {
+        type = lib.types.str;
+        description = "Model name the server serves.";
+      };
+    };
+  };
 in
 {
   options.programs.openwhispr = {
@@ -190,6 +212,38 @@ in
         Built-in actions are never changed.
       '';
     };
+    inference = lib.genAttrs (builtins.attrNames rendererSettings.scopePrefixes) (
+      scope:
+      lib.mkOption {
+        type = lib.types.nullOr endpointType;
+        default = null;
+        description = ''
+          Self-hosted OpenAI-compatible endpoint for the `${scope}` scope. When set,
+          activation selects **Self-Hosted** for the scope with this URL and model.
+          When null, the app keeps whatever is set in its Settings.
+        '';
+      }
+    );
+    transcription = lib.mkOption {
+      type = lib.types.nullOr endpointType;
+      default = null;
+      description = ''
+        Self-hosted OpenAI-compatible speech-to-text endpoint. When set, activation
+        selects **Self-Hosted** transcription with this URL and model.
+      '';
+    };
+    settings = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      example = {
+        cleanupReasoningEffort = "low";
+      };
+      description = ''
+        Raw renderer settings (localStorage keys and string values) to write at
+        activation. These win over the values derived from `inference` and
+        `transcription`. Activation skips the write while OpenWhispr is running.
+      '';
+    };
     launchdLabel = lib.mkOption {
       type = lib.types.str;
       default = "com.dryvist.nix-openwhispr";
@@ -238,11 +292,17 @@ in
     home = {
       packages = [ package ];
       sessionVariables = env;
-      activation = lib.optionalAttrs hasAppData {
-        openwhisprAppData = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          run ${appDataApply}/bin/openwhispr-apply-app-data ${lib.escapeShellArg appDatabase}
-        '';
-      };
+      activation =
+        lib.optionalAttrs hasAppData {
+          openwhisprAppData = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+            run ${appDataApply}/bin/openwhispr-apply-app-data ${lib.escapeShellArg appDatabase}
+          '';
+        }
+        // lib.optionalAttrs (allSettings != { }) {
+          openwhisprSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+            run ${settingsApply}/bin/openwhispr-apply-settings ${lib.escapeShellArg settingsStore}
+          '';
+        };
       file = lib.mkMerge [
         (lib.mkIf cfg.modelBootstrap {
           ".cache/openwhispr/diarization-models/3dspeaker_speech_campplus_sv_en_voxceleb_16k.onnx" = {

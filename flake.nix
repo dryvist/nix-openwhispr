@@ -114,6 +114,13 @@
           app-data-seed = import ./tests/app-data-seed.nix {
             inherit pkgs appData;
           };
+          settings-seed = import ./tests/settings-seed.nix {
+            inherit pkgs;
+            rendererSettings = import ./modules/settings.nix {
+              inherit (nixpkgs) lib;
+              inherit pkgs;
+            };
+          };
           publication =
             pkgs.runCommand "openwhispr-publication-check"
               {
@@ -175,6 +182,15 @@
                         promptFile = "/Users/ci/openwhispr/review-prompt.txt";
                       };
                     };
+                    inference.noteFormatting = {
+                      url = "http://127.0.0.1:4100/v1";
+                      model = "default";
+                    };
+                    transcription = {
+                      url = "http://127.0.0.1:4100/v1";
+                      model = "speech-to-text";
+                    };
+                    settings.cleanupReasoningEffort = "low";
                   };
                 }
               ];
