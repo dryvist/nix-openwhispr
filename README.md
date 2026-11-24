@@ -157,6 +157,9 @@ Set options under `programs.openwhispr` in a Home Manager configuration.
 | `programs.openwhispr.notesDirectory` | null or path | `null` | Notes directory linked from `~/Library/Application Support/open-whispr/notes`. |
 | `programs.openwhispr.openaiBaseUrl` | null or string | `null` | Base URL for OpenAI-compatible local model router (sets `OPENAI_BASE_URL`). |
 | `programs.openwhispr.environment` | attrs of strings | `{}` | Additional non-secret environment variables passed to session and launchd agent. |
+| `programs.openwhispr.inference.<scope>` | null or `{ url, model }` | `null` | Self-hosted endpoint for one [scope](#declarative-settings). |
+| `programs.openwhispr.transcription` | null or `{ url, model }` | `null` | Self-hosted OpenAI-compatible speech-to-text endpoint. |
+| `programs.openwhispr.settings` | attrs of strings | `{}` | Raw app settings to write. These win over values from `inference` and `transcription`. |
 | `programs.openwhispr.folders` | list of strings | `[]` | Folder names to ensure in the application database. A slash stays part of the name. |
 | `programs.openwhispr.dictionary` | list of strings | `[]` | Custom dictionary words to ensure. Matching ignores case. |
 | `programs.openwhispr.dictionaryFile` | null or path | `null` | Runtime path to a file with one dictionary word per line. Read at activation. |
@@ -178,19 +181,15 @@ OpenWhispr combines declarative Nix packaging with macOS-managed state:
     (`~/Library/Application Support/open-whispr/notes` -> `cfg.notesDirectory`).
   - Folders, dictionary words, and actions in the application database, when
     configured (see [Declarative app data](#declarative-app-data)).
+  - Self-hosted model endpoints and other app settings, when configured (see
+    [Declarative settings](#declarative-settings)).
 
 - **One-time UI configuration (set once in OpenWhispr Settings)**:
-  - **Processing mode**: Open Settings and set Dictation, Meeting, and
-    Audio Import transcription modes to **Local**, or to **Self-hosted** to
-    use a shared OpenAI-compatible router. Upstream stores these settings in
-    renderer `localStorage` without a declarative configuration interface.
-  - **Self-hosted router (optional)**: Set transcription to **Self-hosted**
-    with the router base URL (for example `http://127.0.0.1:4100/v1`) and a
-    speech-to-text model alias; OpenWhispr posts to
-    `<base>/audio/transcriptions`. Set the cleanup (polish) scope to
-    **Self-hosted** with the same base URL and a chat model alias; OpenWhispr
-    posts to `<base>/chat/completions`. With both scopes self-hosted,
-    OpenWhispr stops its bundled Whisper/Parakeet and LLM servers. Leave
+  - **Processing mode**: When no endpoint options are set, open Settings and
+    choose **Local** or **Self-hosted** for each scope. OpenWhispr posts
+    transcription to `<base>/audio/transcriptions` and chat scopes to
+    `<base>/chat/completions`. With every scope self-hosted, OpenWhispr stops
+    its bundled Whisper/Parakeet and LLM servers. Leave
     `programs.openwhispr.modelBootstrap` enabled only when a scope stays on
     **Local**.
   - **Save notes as files**: In Settings > Notes, enable **Save notes as
@@ -239,6 +238,38 @@ that schema, so a future upstream release can change it.
 File options are runtime paths. The module reads them at activation and never
 copies their contents into the Nix store. Inline `prompt` values are stored in
 the Nix store.
+
+## Declarative settings
+
+OpenWhispr keeps its model settings in the app's own browser storage
+(`localStorage`, a LevelDB database under
+`~/Library/Application Support/open-whispr/Local Storage/leveldb`). It reads no
+file or variable for them at runtime. Activation writes the configured settings
+into that store:
+
+```nix
+programs.openwhispr = {
+  inference = {
+    dictationCleanup = { url = "http://127.0.0.1:4100/v1"; model = "fast"; };
+    noteFormatting = { url = "http://127.0.0.1:4100/v1"; model = "default"; };
+  };
+  transcription = { url = "http://127.0.0.1:4100/v1"; model = "speech-to-text"; };
+};
+```
+
+The scopes are `dictationCleanup`, `noteFormatting` (meeting AI summaries),
+`dictationAgent`, `chatIntelligence`, and `dictationTranslation`. Note
+formatting falls back to dictation cleanup when it has no model of its own.
+
+Each set scope gets **Self-Hosted** mode, the URL, and the model. A scope left
+`null` keeps what the app has. `settings` writes any other key as a string. The
+step changes only the configured keys, and a second run changes nothing.
+
+The step skips and leaves the store unchanged while OpenWhispr is running or
+before the store exists. The message names the command to run after you quit
+the app. A failed write changes no key and lets activation continue.
+
+Upstream does not document these keys, so a future release can rename them.
 
 ## Plan-boundary policy
 
