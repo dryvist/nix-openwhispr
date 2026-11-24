@@ -54,7 +54,7 @@ if "settings store not found" not in run(apply_bin, tempfile.mkdtemp() + "/none"
 
 # The apply writes the derived and raw settings and leaves other keys alone.
 out = run(apply_bin, db)
-if "applied, 8 changed" not in out:
+if "applied, 9 changed" not in out:
     fail(f"unexpected first apply output: {out!r}")
 want = {
     "cleanupMode": b"\x01self-hosted",
@@ -69,6 +69,15 @@ want = {
 for name, value in want.items():
     if read(db, name) != value:
         fail(f"{name} is {read(db, name)!r}, want {value!r}")
+
+# A key name outside Latin-1 is stored as UTF-16LE, like a value.
+store = plyvel.DB(db)
+try:
+    utf16_key = b"_file://\x00\x00" + "label\u2713".encode("utf-16-le")
+    if store.get(utf16_key) != b"\x01x":
+        fail("non-Latin-1 key name was not stored as UTF-16LE")
+finally:
+    store.close()
 
 # A second apply changes nothing.
 out = run(apply_bin, db)

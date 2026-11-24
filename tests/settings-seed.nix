@@ -20,6 +20,7 @@ let
     }
     // {
       noteLabel = "Notiz ✓";
+      "label✓" = "x";
     };
   # Exit status of the running check: 0 means running, 1 means not running.
   apply = rendererSettings.mkApply {

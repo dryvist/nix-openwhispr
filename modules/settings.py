@@ -3,8 +3,9 @@
 Usage: settings.py LEVELDB_DIR SETTINGS_JSON
 
 Electron keeps localStorage in a Chromium LevelDB database. A key is
-"_" + origin + "\\x00\\x01" + name, and a value is a format byte followed by
-the text: 1 for Latin-1, 0 for UTF-16LE. The app loads its pages from file://.
+"_" + origin + "\\x00" + the encoded name, and a value is the encoded text.
+Encoded text is a format byte followed by the characters: 1 for Latin-1, 0 for
+UTF-16LE. The app loads its pages from file://.
 """
 
 import json
@@ -12,7 +13,7 @@ import sys
 
 import plyvel
 
-PREFIX = b"_file://\x00\x01"
+ORIGIN = b"_file://\x00"
 
 
 def encode(value):
@@ -31,7 +32,7 @@ def main(db_path, settings_path):
         # One batch, so a failure leaves every key as it was.
         with db.write_batch(transaction=True) as batch:
             for name, value in sorted(settings.items()):
-                key = PREFIX + name.encode("latin-1")
+                key = ORIGIN + encode(name)
                 want = encode(value)
                 if db.get(key) != want:
                     batch.put(key, want)
