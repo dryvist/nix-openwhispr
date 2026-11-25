@@ -148,53 +148,60 @@
               ];
             }).activationPackage;
           module-full =
-            (home-manager.lib.homeManagerConfiguration {
-              inherit pkgs;
-              modules = [
-                ./modules/home-manager.nix
-                {
-                  home = {
-                    username = "ci";
-                    homeDirectory = "/Users/ci";
-                    stateVersion = "26.05";
-                  };
-                  programs.openwhispr = {
-                    enable = true;
-                    notesDirectory = "/tmp/openwhispr";
-                    openaiBaseUrl = "http://localhost:8000/v1";
-                    environment = {
-                      FOO = "bar";
+            let
+              hm = home-manager.lib.homeManagerConfiguration {
+                inherit pkgs;
+                modules = [
+                  ./modules/home-manager.nix
+                  {
+                    home = {
+                      username = "ci";
+                      homeDirectory = "/Users/ci";
+                      stateVersion = "26.05";
                     };
-                    launchdLabel = "custom.label";
-                    folders = [
-                      "Meetings"
-                      "clients/acme"
-                    ];
-                    dictionary = [ "Acme Corp" ];
-                    dictionaryFile = "/Users/ci/openwhispr/dictionary.txt";
-                    actions = {
-                      "Summarize meeting" = {
-                        icon = "notes";
-                        prompt = "Summarize the meeting in three bullets.";
+                    programs.openwhispr = {
+                      enable = true;
+                      notesDirectory = "/tmp/openwhispr";
+                      openaiBaseUrl = "http://localhost:8000/v1";
+                      environment = {
+                        FOO = "bar";
                       };
-                      "Review draft" = {
-                        kind = "template";
-                        promptFile = "/Users/ci/openwhispr/review-prompt.txt";
+                      launchdLabel = "custom.label";
+                      folders = [
+                        "Meetings"
+                        "clients/acme"
+                      ];
+                      dictionary = [ "Acme Corp" ];
+                      dictionaryFile = "/Users/ci/openwhispr/dictionary.txt";
+                      actions = {
+                        "Summarize meeting" = {
+                          icon = "notes";
+                          prompt = "Summarize the meeting in three bullets.";
+                        };
+                        "Review draft" = {
+                          kind = "template";
+                          promptFile = "/Users/ci/openwhispr/review-prompt.txt";
+                        };
                       };
+                      inference.noteFormatting = {
+                        url = "http://127.0.0.1:4100/v1";
+                        model = "default";
+                      };
+                      transcription = {
+                        url = "http://127.0.0.1:4100/v1";
+                        model = "speech-to-text";
+                      };
+                      settings.cleanupReasoningEffort = "low";
                     };
-                    inference.noteFormatting = {
-                      url = "http://127.0.0.1:4100/v1";
-                      model = "default";
-                    };
-                    transcription = {
-                      url = "http://127.0.0.1:4100/v1";
-                      model = "speech-to-text";
-                    };
-                    settings.cleanupReasoningEffort = "low";
-                  };
-                }
-              ];
-            }).activationPackage;
+                  }
+                ];
+              };
+            in
+            # A self-hosted transcription endpoint must not pre-warm the bundled server.
+            assert !(hm.config.home.sessionVariables ? LOCAL_WHISPER_MODEL);
+            assert
+              !(hm.config.launchd.agents.openwhispr.config.EnvironmentVariables ? LOCAL_TRANSCRIPTION_PROVIDER);
+            hm.activationPackage;
         }
       );
 

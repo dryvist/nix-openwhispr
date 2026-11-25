@@ -10,6 +10,10 @@ let
   app = "${package}/Applications/OpenWhispr.app";
   env = {
     OPENWHISPR_CHANNEL = "production";
+  }
+  # The app pre-warms its bundled server at startup whenever these are set,
+  # whatever the transcription mode, so a self-hosted endpoint leaves them out.
+  // lib.optionalAttrs (cfg.transcription == null) {
     LOCAL_TRANSCRIPTION_PROVIDER = cfg.localTranscriptionProvider;
     LOCAL_WHISPER_MODEL = cfg.whisperModel;
     PARAKEET_MODEL = cfg.parakeetModel;
