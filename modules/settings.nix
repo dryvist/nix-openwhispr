@@ -79,6 +79,8 @@ in
     lib.foldl' (acc: scope: acc // forScope scope scopes.${scope}) { } (builtins.attrNames scopes)
     // lib.optionalAttrs (transcription != null) {
       transcriptionMode = "self-hosted";
+      # The app pre-warms its bundled Whisper server while this stays true.
+      useLocalWhisper = "false";
       remoteTranscriptionType = "openai-compatible";
       remoteTranscriptionUrl = transcription.url;
       remoteTranscriptionModel = transcription.model;

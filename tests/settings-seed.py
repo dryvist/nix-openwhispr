@@ -54,7 +54,7 @@ if "settings store not found" not in run(apply_bin, tempfile.mkdtemp() + "/none"
 
 # The apply writes the derived and raw settings and leaves other keys alone.
 out = run(apply_bin, db)
-if "applied, 9 changed" not in out:
+if "applied, 10 changed" not in out:
     fail(f"unexpected first apply output: {out!r}")
 want = {
     "cleanupMode": b"\x01self-hosted",
@@ -63,6 +63,7 @@ want = {
     "transcriptionMode": b"\x01self-hosted",
     "remoteTranscriptionType": b"\x01openai-compatible",
     "remoteTranscriptionModel": b"\x01speech",
+    "useLocalWhisper": b"\x01false",
     "noteLabel": b"\x00" + "Notiz ✓".encode("utf-16-le"),
     "uiTheme": b"\x01dark",
 }
